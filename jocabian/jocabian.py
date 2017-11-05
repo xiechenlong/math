@@ -3,52 +3,40 @@ import itertools
 import time
 
 
-num_variable = 2
+def get_variables(num_variable):
+	variables = Matrix(list(symbols('x1:{}'.format(num_variable+1))))
+	variables_y = Matrix(list(symbols('y1:{}'.format(num_variable+1))))
 
-variables = Matrix(list(symbols('x1:{}'.format(num_variable+1))))
-variables_y = Matrix(list(symbols('y1:{}'.format(num_variable+1))))
+	A = []
+	for i in range(1,num_variable+1):
+		A.append(list(symbols('a{}:{}'.format(i*10+1,i*10+num_variable+1))))
 
-matrix = []
-for i in range(1,num_variable+1):
-	matrix.append(list(symbols('a{}:{}'.format(i*10+1,i*10+num_variable+1))))
+	A = Matrix(A)
 
-matrix = Matrix(matrix)
+	h_linear = A * variables
+	h_linear_y = A * variables_y
 
-h_linear = matrix * variables
-h_linear_y = matrix * variables_y
+	diag_h = eye(num_variable)
+	for i in range(0,num_variable):
+		diag_h[i,i] = h_linear[i]**2
 
-matrix_h = eye(num_variable)
-for i in range(0,num_variable):
-	matrix_h[i,i] = h_linear[i]**2
+	HA = diag_h * A
+	# print HA
 
-# print matrix_h
+	z = symbols('z')
 
-HA = matrix_h * matrix
-# print HA
+	return variables, variables_y, A, HA, h_linear, h_linear_y, z
 
-equation_2 = [variables[i] + h_linear[i]**3 - variables_y[i] - h_linear_y[i]**3 for i in range(0,num_variable)]
-# print equation_2
+# for x in get_variables(2):
+# 	print x
 
-z = symbols('z')
-equation_3 = [1 - z*(variables[0] - variables_y[0])]
-# print equation_3
-
-for index, element in enumerate(h_linear):
-	# print element
-	h_linear[index] = element * element
-
-# print 'variables: ',variables
-# print 'matrix: ', matrix
-# print 'h: ', h_linear
-
-equation = []
-equation_coeff = []
 
 def k_order_principal_minor(matrix,k_rows,k):
 	kopm = Matrix(k,k,[matrix[i,j] for i in k_rows for j in k_rows])
 	return kopm.det()
 
 # print k_order_principal_minor(matrix,[0,1],2)
+
 
 def get(k,num_variable):
 	balls = 2 * k
@@ -59,7 +47,8 @@ def get(k,num_variable):
 
 # print get(2,2)
 
-def get_n_equation(equation,equation_coeff,m,matrix,num_variable):
+
+def get_n_equation(variables,equation,equation_coeff,A,matrix,num_variable):
 	for k in range(0,num_variable-1):
 		k_equation = 0
 		for subset in itertools.combinations(range(0,num_variable), k+1):
@@ -75,25 +64,10 @@ def get_n_equation(equation,equation_coeff,m,matrix,num_variable):
 			# print variable, k_equation.coeff(variable)
 			equation_coeff.append(k_equation.coeff(variable))
 
-	equation_coeff.append(m.det())
+	equation_coeff.append(A.det())
 
 	return equation, equation_coeff
 
-equation, equation_coeff = get_n_equation(equation,equation_coeff,matrix,HA,num_variable)
-# print equation
-# print len(equation_coeff)
-# 2/3/4 ----------  4/22/130 
-
-all_equation = equation_coeff + equation_2 + equation_3
-
-for index,e in enumerate(all_equation):
-	all_equation[index] = poly(e)
-
-print len(all_equation)
-print all_equation
-
-t = time.time()
-print groebner(all_equation) == [1], time.time() - t
 
 def test_grobner():
 	x, y = symbols('x y')
@@ -105,3 +79,39 @@ def test_grobner():
 
 # test_grobner()
 
+
+def main():
+	for num_variable in range(1,3):
+		variables, variables_y, A, HA, h_linear, h_linear_y, z= get_variables(num_variable)
+		# print A, h_linear
+
+		equation_2 = [variables[i] + h_linear[i]**3 - variables_y[i] - h_linear_y[i]**3 for i in range(0,num_variable)]
+		# print equation_2
+
+		equation_3 = [1 - z*(variables[0] - variables_y[0])]
+
+		for index, element in enumerate(h_linear):
+			# print element
+			h_linear[index] = element * element
+
+
+		equation = []
+		equation_coeff = []
+
+		equation, equation_coeff = get_n_equation(variables,equation,equation_coeff,A,HA,num_variable)
+		# print equation
+		# print len(equation_coeff)
+		# 2/3/4 ----------  4/22/130 
+
+		all_equation = equation_coeff + equation_2 + equation_3
+
+		for index,e in enumerate(all_equation):
+			all_equation[index] = poly(e)
+
+		# print len(all_equation)
+		# print all_equation
+
+		t = time.time()
+		print groebner(all_equation) == [1], time.time() - t
+
+main()
