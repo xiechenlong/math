@@ -59,7 +59,7 @@ def get(k,num_variable):
 
 # print get(2,2)
 
-def get_n_equation(equation,equation_coeff,matrix,num_variable):
+def get_n_equation(equation,equation_coeff,m,matrix,num_variable):
 	for k in range(0,num_variable-1):
 		k_equation = 0
 		for subset in itertools.combinations(range(0,num_variable), k+1):
@@ -75,11 +75,11 @@ def get_n_equation(equation,equation_coeff,matrix,num_variable):
 			# print variable, k_equation.coeff(variable)
 			equation_coeff.append(k_equation.coeff(variable))
 
-	equation_coeff.append(matrix.det())
+	equation_coeff.append(m.det())
 
 	return equation, equation_coeff
 
-equation, equation_coeff = get_n_equation(equation,equation_coeff,HA,num_variable)
+equation, equation_coeff = get_n_equation(equation,equation_coeff,matrix,HA,num_variable)
 # print equation
 # print len(equation_coeff)
 # 2/3/4 ----------  4/22/130 
@@ -88,7 +88,9 @@ all_equation = equation_coeff + equation_2 + equation_3
 
 for index,e in enumerate(all_equation):
 	all_equation[index] = poly(e)
+
 print len(all_equation)
+print all_equation
 
 t = time.time()
 print groebner(all_equation) == [1], time.time() - t
